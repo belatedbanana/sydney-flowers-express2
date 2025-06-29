@@ -1,12 +1,12 @@
 /* Make navbar slimmer */
 .navbar {
-  padding-top: 0.6rem;
-  padding-bottom: 0.6rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
 }
 
 /* Logo size */
 .logo-img {
-  height: 110px;
+  height: 80px;
   width: auto;
 }
 
