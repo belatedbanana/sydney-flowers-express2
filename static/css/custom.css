@@ -1,0 +1,19 @@
+/* Fix navbar height and vertical alignment */
+.navbar {
+  padding-top: 0.3rem;       /* less vertical padding */
+  padding-bottom: 0.3rem;
+  height: 56px;              /* typical Bootstrap navbar height */
+}
+
+/* Align brand container */
+.navbar-brand {
+  display: flex;
+  align-items: center;       /* vertical center */
+  height: 100%;              /* full navbar height */
+}
+
+/* Logo image size */
+.logo-img {
+  height: 40px;              /* smaller logo to keep navbar slim */
+  width: auto;
+}
