@@ -6,9 +6,9 @@ app = Flask(__name__)
 def home():
     return render_template('home.html')
 
+@app.route('/catalogue')
+def catalogue():
+    return render_template('catalogue.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
-
-@app.route("/catalogue")
-def catalogue():
-    return render_template("catalogue.html")
