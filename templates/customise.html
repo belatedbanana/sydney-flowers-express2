@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Customise - Sydney Flowers Express{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="mb-4">Customise Your Bouquet</h1>
+  <p class="lead">Create a unique bouquet tailored to your needs.</p>
+
+  <form method="POST" action="/customise">
+    <div class="mb-3">
+      <label for="flowerType" class="form-label">Choose Your Flowers</label>
+      <select class="form-select" id="flowerType" name="flowerType">
+        <option selected disabled>Select flowers</option>
+        <option>Roses</option>
+        <option>Tulips</option>
+        <option>Sunflowers</option>
+        <option>Lilies</option>
+        <option>Mixed Seasonal</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="colourScheme" class="form-label">Colour Scheme</label>
+      <select class="form-select" id="colourScheme" name="colourScheme">
+        <option selected disabled>Select a colour theme</option>
+        <option>Romantic Reds</option>
+        <option>Bright & Cheerful</option>
+        <option>Soft Pastels</option>
+        <option>Classic Whites</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="message" class="form-label">Message Card</label>
+      <textarea class="form-control" id="message" name="message" rows="3" placeholder="Enter a custom message..."></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="size" class="form-label">Bouquet Size</label>
+      <select class="form-select" id="size" name="size">
+        <option>Small</option>
+        <option>Medium</option>
+        <option>Large</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-success">Submit Custom Order</button>
+  </form>
+</div>
+{% endblock %}
