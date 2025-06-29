@@ -27,5 +27,14 @@ def customise():
 
     return render_template('customise.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        # TODO: Add real authentication here
+        return f"Logged in as {email}"
+    return render_template('login.html')
+
 if __name__ == '__main__':
     app.run(debug=True)

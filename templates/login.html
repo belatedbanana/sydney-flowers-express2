@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Sydney Flowers Express{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="mb-4">Login</h1>
+  <form method="POST" action="/login">
+    <div class="mb-3">
+      <label for="email" class="form-label">Email address</label>
+      <input type="email" class="form-control" id="email" name="email" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input type="password" class="form-control" id="password" name="password" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Log In</button>
+  </form>
+</div>
+{% endblock %}
