@@ -12,3 +12,22 @@ def catalogue():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+from flask import request, render_template, redirect, url_for
+
+@app.route('/customise', methods=['GET', 'POST'])
+def customise():
+    if request.method == 'POST':
+        flower_type = request.form['flowerType']
+        colour = request.form['colourScheme']
+        message = request.form['message']
+        size = request.form['size']
+
+        # TODO: process/store the data, or show confirmation
+        return render_template('customise_confirmation.html', 
+                               flower_type=flower_type, 
+                               colour=colour,
+                               message=message,
+                               size=size)
+
+    return render_template('customise.html')
