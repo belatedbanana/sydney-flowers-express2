@@ -36,5 +36,15 @@ def login():
         return f"Logged in as {email}"
     return render_template('login.html')
 
+from flask import send_from_directory
+
+@app.route('/service-worker.js')
+def service_worker():
+    return send_from_directory('static', 'service-worker.js')
+
+@app.route('/manifest.json')
+def manifest():
+    return send_from_directory('static', 'manifest.json')
+
 if __name__ == '__main__':
     app.run(debug=True)

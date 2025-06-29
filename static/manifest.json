@@ -5,6 +5,7 @@
   "display": "standalone",
   "background_color": "#0d6efd",
   "theme_color": "#0d6efd",
+  "description": "Your trusted wholesale flower supplier for florists and events.",
   "icons": [
     {
       "src": "/static/icons/icon-192.png",
