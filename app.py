@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, make_response
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from functools import wraps  # <-- import wraps for decorator
+from functools import wraps
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -11,17 +12,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Login required decorator
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user' not in session:
-            flash('Please log in to access this page.', 'warning')
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
+# ---------------------- MODELS ----------------------
 
-# User model with added name field
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -35,46 +27,35 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-# Create DB tables
+class BouquetOrder(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    flower_type = db.Column(db.String(100), nullable=False)
+    colour = db.Column(db.String(100), nullable=False)
+    message = db.Column(db.Text, nullable=True)
+    size = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', backref=db.backref('bouquet_orders', lazy=True))
+
+# ---------------------- UTILITY ----------------------
+
 @app.before_request
 def setup_app():
     db.create_all()
+    if 'cart' not in session:
+        session['cart'] = []
 
-    # Create admin user if not already exists
+    # Admin creation
     admin_email = 'admin@example.com'
     if not User.query.filter_by(email=admin_email).first():
-        admin = User(
-            email=admin_email,
-            name='Admin'
-        )
-        admin.set_password('adminpass123')  # You can change this password
+        admin = User(email=admin_email, name='Admin')
+        admin.set_password('adminpass123')
         db.session.add(admin)
         db.session.commit()
-        print('✅ Admin account created.')
 
-from functools import wraps
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if session.get('user') != 'Admin':
-            flash("You must be an admin to access that page.", "danger")
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-@app.route('/admin/dashboard')
-@admin_required
-def admin_dashboard():
-    user_count = User.query.count()
-    return render_template('admin_dashboard.html', user_count=user_count)
-
-# Context processor to inject user_name into all templates
 @app.context_processor
 def inject_user():
     return dict(user_name=session.get('user'))
-
-from functools import wraps
 
 def login_required(f):
     @wraps(f)
@@ -85,33 +66,20 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@app.route('/admin')
-@login_required
-def admin():
-    user = User.query.filter_by(name=session.get('user')).first()
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('user') != 'Admin':
+            flash("Admin access required.", "danger")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
-    if not user or not user.is_admin:
-        flash('Access denied. Admins only.', 'danger')
-        return redirect(url_for('home'))
-
-    return render_template('admin.html')
+# ---------------------- ROUTES ----------------------
 
 @app.route('/')
 def home():
     return render_template('home.html')
-
-from datetime import datetime
-
-class BouquetOrder(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    flower_type = db.Column(db.String(100), nullable=False)
-    colour = db.Column(db.String(100), nullable=False)
-    message = db.Column(db.Text, nullable=True)
-    size = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    user = db.relationship('User', backref=db.backref('bouquet_orders', lazy=True))
 
 @app.route('/catalogue')
 def catalogue():
@@ -150,13 +118,11 @@ def customise():
         message = request.form['message']
         size = request.form['size']
 
-        # Get current user
         user = User.query.filter_by(name=session.get('user')).first()
         if not user:
             flash("You must be logged in to place a custom order.", "danger")
             return redirect(url_for('login'))
 
-        # Save bouquet order
         bouquet_order = BouquetOrder(
             user_id=user.id,
             flower_type=flower_type,
@@ -176,6 +142,20 @@ def customise():
 
     return render_template('customise.html')
 
+@app.route('/admin')
+@login_required
+def admin():
+    user = User.query.filter_by(name=session.get('user')).first()
+    if not user or not user.is_admin:
+        flash('Access denied. Admins only.', 'danger')
+        return redirect(url_for('home'))
+    return render_template('admin.html')
+
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    user_count = User.query.count()
+    return render_template('admin_dashboard.html', user_count=user_count)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -225,6 +205,23 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('home'))
+
+# ---------------------- CART ROUTES ----------------------
+
+@app.route('/cart')
+def view_cart():
+    cart = session.get('cart', [])
+    total = sum(item['price'] for item in cart)
+    return render_template('cart.html', cart=cart, total=total)
+
+@app.route('/remove_from_cart/<int:index>')
+def remove_from_cart(index):
+    if 'cart' in session and 0 <= index < len(session['cart']):
+        session['cart'].pop(index)
+        session.modified = True
+    return redirect(url_for('view_cart'))
+
+# ---------------------- STATIC & CACHE ----------------------
 
 @app.route('/service-worker.js')
 def service_worker():

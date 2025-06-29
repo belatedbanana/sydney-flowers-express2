@@ -40,6 +40,18 @@
                     <li class="nav-item"><a class="nav-link" href="/catalogue">Catalogue</a></li>
                     <li class="nav-item"><a class="nav-link" href="/customise">Customise</a></li>
 
+                    <!-- 🛒 Cart icon with total -->
+                    <li class="nav-item d-flex align-items-center me-2">
+                        <a class="nav-link position-relative" href="/cart">
+                            <i class="bi bi-cart" style="font-size: 1.3rem;"></i>
+                            {% if session.cart %}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    ${{ session.cart | map(attribute='price') | sum }}
+                                </span>
+                            {% endif %}
+                        </a>
+                    </li>
+
                     {% if user_name %}
                         <li class="nav-item">
                             <span class="nav-link">Welcome, {{ user_name }}</span>
@@ -53,6 +65,7 @@
                         </li>
                     {% endif %}
                 </ul>
+
             </div>
 
         </div>
