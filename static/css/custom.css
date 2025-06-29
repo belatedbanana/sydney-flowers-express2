@@ -6,7 +6,7 @@
 
 /* Logo size */
 .logo-img {
-  height: 80px;
+  height: 110px;
   width: auto;
 }
 
@@ -16,4 +16,36 @@
 
 .list-group-item:hover {
   background-color: #e9f5ec;
+}
+
+.card-img-top {
+  height: 150px;          /* fixed height */
+  width: 100%;            /* full width */
+  object-fit: contain;    /* contain entire image */
+  background-color: #fff; /* optional: white background for padding */
+}
+
+/* Fade in on scroll */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Card hover effect */
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Button hover */
+.btn-success:hover {
+  background-color: #2d6a4f;
+  box-shadow: 0 6px 12px rgba(45, 106, 79, 0.6);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
