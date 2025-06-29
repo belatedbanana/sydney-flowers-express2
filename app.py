@@ -40,6 +40,15 @@ class BouquetOrder(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref=db.backref('bouquet_orders', lazy=True))
 
+class CheckoutOrder(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    items = db.Column(db.Text, nullable=False)
+    total_price = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('checkout_orders', lazy=True))
+
 @app.before_request
 def setup_app():
     db.create_all()
@@ -294,8 +303,36 @@ def customise():
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    user_count = User.query.count()
-    return render_template('admin_dashboard.html', user_count=user_count)
+    users = User.query.all()
+    checkout_orders = CheckoutOrder.query.all()
+
+    total_users = len(users)
+    total_orders = len(checkout_orders)
+    total_revenue = sum(order.total_price for order in checkout_orders)
+
+    from collections import Counter
+    import json
+
+    flower_counter = Counter()
+    for order in checkout_orders:
+        try:
+            items = json.loads(order.items)
+            for item in items:
+                flower_counter[item['name']] += 1
+        except:
+            continue
+
+    top_selling = flower_counter.most_common(5)
+
+    return render_template(
+        'admin_dashboard.html',
+        user_name=session.get('user'),
+        total_users=total_users,
+        total_orders=total_orders,
+        total_revenue=total_revenue,
+        top_selling=top_selling
+    )
+
 
 @app.route('/register', methods=['GET', 'POST'])
 @block_admins
