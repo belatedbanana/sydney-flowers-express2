@@ -6,13 +6,6 @@
   <h2 class="mb-4">Checkout</h2>
 
   {% if cart %}
-    {% if not user_name %}
-      <div class="mb-3">
-        <label for="guestEmail" class="form-label">Enter your email to receive a receipt:</label>
-        <input type="email" name="guestEmail" id="guestEmail" class="form-control" placeholder="example@email.com" required>
-      </div>
-    {% endif %}
-
 
     <ul class="list-group mb-4">
       {% for item in cart %}
@@ -27,16 +20,65 @@
       </li>
     </ul>
 
-    <form method="POST">
+    <form method="POST" id="checkoutForm" novalidate>
       {% if not user_name %}
-      <div class="mb-3">
-        <label for="guestEmail" class="form-label">Enter your email to receive a receipt:</label>
-        <input type="email" name="guestEmail" id="guestEmail" class="form-control" placeholder="example@email.com" required>
-      </div>
+        <div class="mb-3">
+          <label for="guestEmail" class="form-label">Email Address <small class="text-muted">(for receipt)</small></label>
+          <input type="email" name="guestEmail" id="guestEmail" class="form-control" placeholder="example@email.com" required>
+        </div>
       {% endif %}
 
-      <button type="submit" class="btn btn-primary btn-lg">Place Order</button>
+      <hr class="my-4">
+      <h5 class="mb-3">Payment Details</h5>
+
+      <div class="mb-3">
+        <label for="cardName" class="form-label">Name on Card</label>
+        <input type="text" name="cardName" id="cardName" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="cardNumber" class="form-label">Card Number</label>
+        <input type="text" name="cardNumber" id="cardNumber" class="form-control" pattern="\d{16}" placeholder="1234567812345678" required>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="expiry" class="form-label">Expiry</label>
+          <input type="month" name="expiry" id="expiry" class="form-control" required>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label for="cvv" class="form-label">CVV</label>
+          <input type="text" name="cvv" id="cvv" class="form-control" pattern="\d{3}" required>
+        </div>
+      </div>
+
+      <div class="text-end">
+        <button type="submit" class="btn btn-primary btn-lg">Place Order</button>
+      </div>
     </form>
+
+    <div id="processingMessage" class="alert alert-info mt-4 d-none">
+      <strong>Processing Payment...</strong> Please wait.
+    </div>
+
+    <script>
+      document.getElementById("checkoutForm").addEventListener("submit", function(event) {
+        const form = this;
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          event.stopPropagation();
+          form.classList.add("was-validated");
+        } else {
+          event.preventDefault();
+          document.getElementById("processingMessage").classList.remove("d-none");
+
+          setTimeout(() => {
+            form.submit();
+          }, 2000); // Simulate delay
+        }
+      });
+    </script>
 
   {% else %}
     <p>Your cart is empty.</p>
