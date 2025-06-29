@@ -1,0 +1,18 @@
+<!-- templates/orders.html -->
+{% extends 'base.html' %}
+{% block content %}
+  <h2>My Orders</h2>
+  {% if orders %}
+    <ul>
+      {% for order in orders %}
+        <li>
+          <strong>{{ order.flower_type }}</strong> ({{ order.colour }}, {{ order.size }})
+          <br>Message: {{ order.message or "None" }}
+          <br><small>Ordered on {{ order.created_at.strftime("%Y-%m-%d %H:%M") }}</small>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>You haven't placed any orders yet.</p>
+  {% endif %}
+{% endblock %}

@@ -2,7 +2,7 @@
 
 {% block title %}
   {% if flower %}
-    {{ flower }} - Sydney Flowers Express
+    {{ flower.name }} - Sydney Flowers Express
   {% else %}
     Catalogue - Sydney Flowers Express
   {% endif %}
@@ -22,9 +22,9 @@
           "Peonies", "Rananculus", "Roses", "Snapdragons", "Stocks", "Sunflower",
           "Tulips", "Veronicas", "Fillers", "Greens", "Preserved Flowers"
       ] %}
-        <li class="list-group-item {% if flower == item %}active{% endif %}">
+        <li class="list-group-item {% if flower and flower.name == item %}active{% endif %}">
           <a href="{{ url_for('catalogue') }}?flower={{ item | urlencode }}" 
-             class="text-decoration-none {% if flower == item %}text-white{% else %}text-dark{% endif %}">
+             class="text-decoration-none {% if flower and flower.name == item %}text-white{% else %}text-dark{% endif %}">
             {{ item }}
           </a>
         </li>
@@ -39,48 +39,21 @@
       <p class="lead mb-5">Please select a flower from the sidebar to see details.</p>
 
     {% else %}
-      <h1 class="mb-4">{{ flower }}</h1>
+      <h1 class="mb-1">{{ flower.name }}</h1>
+      <p class="text-muted fst-italic">{{ flower.latin_name }}</p>
+      <p>{{ flower.description }}</p>
 
-      {# Flower descriptions #}
-      {% if flower == "Alstroemerias" %}
-      <p>Alstroemerias (Peruvian Lilies) are tough, rounded stems that produce beautiful orchid-like flowers carried in clusters on top of the stems. These flowers have very diverse patterns of colours and symbolise friendship and devotion.</p>
       <ul>
-        <li><strong>Category:</strong> Cut Flowers</li>
-        <li><strong>Genus:</strong> Alstoemeria aurantiaca</li>
-        <li><strong>Common Name:</strong> Lily of the Incas, Peruvian Lily</li>
-        <li><strong>Longevity:</strong> 7–12 days, depending on care and handling</li>
-        <li><strong>Stem Length:</strong> Approx. 50cm – 70cm</li>
-        <li><strong>Availability:</strong> All Year Round</li>
+        <li><strong>Category:</strong> {{ flower.category }}</li>
+        <li><strong>Genus:</strong> {{ flower.genus }}</li>
+        <li><strong>Common Name:</strong> {{ flower.common_name }}</li>
+        <li><strong>Longevity:</strong> {{ flower.longevity }}</li>
+        <li><strong>Stem Length:</strong> {{ flower.stem_length }}</li>
+        <li><strong>Availability:</strong> {{ flower.availability }}</li>
       </ul>
 
-      {% elif flower == "Calla Lilies" %}
-      <p>Calla lilies are a beautiful type of flower that have been enjoyed for centuries. They are widely used in weddings, bouquets, and cut flower arrangements. Calla Lilies are bride favourites and symbolise magnificent beauty.</p>
-      <ul>
-        <li><strong>Category:</strong> Cut Flowers</li>
-        <li><strong>Genus:</strong> Zantedeschia Areceae</li>
-        <li><strong>Common Name:</strong> Calla Lilies</li>
-        <li><strong>Longevity:</strong> 7–10 days, depending on care and handling</li>
-        <li><strong>Stem Length:</strong> Approx. 30–45cm</li>
-        <li><strong>Availability:</strong> All Year Round</li>
-      </ul>
-
-      {% elif flower == "Bell Flowers" %}
-      <p>Bell Flowers are charming blooms known for their bell-shaped blossoms and vibrant colours.</p>
-      <ul>
-        <li><strong>Category:</strong> Cut Flowers</li>
-        <li><strong>Genus:</strong> Campanula</li>
-        <li><strong>Common Name:</strong> Bell Flower</li>
-        <li><strong>Longevity:</strong> 5-10 days, depending on care</li>
-        <li><strong>Availability:</strong> Seasonal</li>
-      </ul>
-
-      {% else %}
-      <p>Description coming soon for {{ flower }}.</p>
-      {% endif %}
-
-      {# Flower variants #}
       <div class="row row-cols-1 row-cols-md-2 g-4 mt-4">
-        {% for variant in variants %}
+        {% for variant in flower.variants %}
           <div class="col">
             <div class="card h-100 shadow-sm">
               <img src="{{ url_for('static', filename='images/' + variant.image) }}" class="card-img-top" alt="{{ variant.name }}">
@@ -91,11 +64,16 @@
               </div>
             </div>
           </div>
-        {% else %}
-          <p>No variants available.</p>
+        {% endfor %}
+
+        {% for i in range(4 - flower.variants|length) %}
+          <div class="col">
+            <div class="card h-100 d-flex align-items-center justify-content-center text-center border-dashed" style="min-height: 220px;">
+              <div class="text-muted">More variants coming soon</div>
+            </div>
+          </div>
         {% endfor %}
       </div>
-
     {% endif %}
   </section>
 </div>

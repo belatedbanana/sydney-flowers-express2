@@ -1,21 +1,30 @@
 {% extends "base.html" %}
-{% block title %}Your Cart{% endblock %}
+{% block title %}Your Cart - Sydney Flowers Express{% endblock %}
+
 {% block content %}
 <div class="container py-5">
   <h2>Your Cart</h2>
+
   {% if cart %}
-    <ul class="list-group mb-4">
+    <ul class="list-group mb-3">
       {% for item in cart %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        {{ item.name }} - ${{ item.price }}
-        <a href="{{ url_for('remove_from_cart', index=loop.index0) }}" class="btn btn-sm btn-outline-danger">Remove</a>
-      </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          {{ item.name }}
+          <span>${{ "%.2f"|format(item.price) }}</span>
+        </li>
       {% endfor %}
+      <li class="list-group-item d-flex justify-content-between align-items-center fw-bold">
+        Total
+        <span>${{ "%.2f"|format(total) }}</span>
+      </li>
     </ul>
-    <h4>Total: ${{ total }}</h4>
-    <a href="/checkout" class="btn btn-success">Proceed to Checkout</a>
+
+    <div class="d-flex justify-content-end gap-3 mt-3">
+      <a href="{{ url_for('catalogue') }}" class="btn btn-outline-secondary btn-lg">Continue Shopping</a>
+      <a href="{{ url_for('checkout') }}" class="btn btn-success btn-lg">Proceed to Checkout</a>
+    </div>
   {% else %}
-    <p>Your cart is empty.</p>
+    <p>Your cart is currently empty.</p>
   {% endif %}
 </div>
 {% endblock %}

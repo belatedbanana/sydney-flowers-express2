@@ -1,15 +1,45 @@
 {% extends "base.html" %}
-{% block title %}Checkout{% endblock %}
+{% block title %}Checkout - Sydney Flowers Express{% endblock %}
+
 {% block content %}
 <div class="container py-5">
-  <h2>Checkout Summary</h2>
-  <ul class="list-group mb-4">
-    {% for item in cart %}
-    <li class="list-group-item">{{ item.name }} - ${{ item.price }}</li>
-    {% endfor %}
-  </ul>
-  <h4>Total: ${{ total }}</h4>
-  <p class="text-success">Order placed successfully (simulation)!</p>
-  <a href="/" class="btn btn-primary">Back to Home</a>
+  <h2 class="mb-4">Checkout</h2>
+
+  {% if cart %}
+    {% if not user_name %}
+      <div class="mb-3">
+        <label for="guestEmail" class="form-label">Enter your email to receive a receipt:</label>
+        <input type="email" name="guestEmail" id="guestEmail" class="form-control" placeholder="example@email.com" required>
+      </div>
+    {% endif %}
+
+
+    <ul class="list-group mb-4">
+      {% for item in cart %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          {{ item.name }}
+          <span>${{ "%.2f"|format(item.price) }}</span>
+        </li>
+      {% endfor %}
+      <li class="list-group-item d-flex justify-content-between align-items-center fw-bold">
+        Total
+        <span>${{ "%.2f"|format(total) }}</span>
+      </li>
+    </ul>
+
+    <form method="POST">
+      {% if not user_name %}
+      <div class="mb-3">
+        <label for="guestEmail" class="form-label">Enter your email to receive a receipt:</label>
+        <input type="email" name="guestEmail" id="guestEmail" class="form-control" placeholder="example@email.com" required>
+      </div>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary btn-lg">Place Order</button>
+    </form>
+
+  {% else %}
+    <p>Your cart is empty.</p>
+  {% endif %}
 </div>
 {% endblock %}

@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
+from flask_mail import Mail, Message
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -37,6 +39,15 @@ class BouquetOrder(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref=db.backref('bouquet_orders', lazy=True))
 
+class CheckoutOrder(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Guest checkout allowed
+    items = db.Column(db.Text, nullable=False)  # Store cart as JSON
+    total_price = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('checkout_orders', lazy=True))
+
 # ---------------------- UTILITY ----------------------
 
 @app.before_request
@@ -45,7 +56,6 @@ def setup_app():
     if 'cart' not in session:
         session['cart'] = []
 
-    # Admin creation
     admin_email = 'admin@example.com'
     if not User.query.filter_by(email=admin_email).first():
         admin = User(email=admin_email, name='Admin')
@@ -75,6 +85,76 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+import json
+
+@app.route('/checkout', methods=['GET', 'POST'])
+def checkout():
+    cart = session.get('cart', [])
+    total = sum(item['price'] for item in cart)
+
+    # Enforce minimum order total (e.g. $50)
+    MIN_ORDER_TOTAL = 50.00
+    if total < MIN_ORDER_TOTAL:
+        flash(f'Minimum order is ${MIN_ORDER_TOTAL:.2f}. Please add more items to your cart.', 'warning')
+        return redirect(url_for('view_cart'))
+
+    if request.method == 'POST':
+        guest_email = request.form.get('guestEmail')  # From form, if guest
+
+        user = User.query.filter_by(name=session.get('user')).first()
+        order = CheckoutOrder(
+            user_id=user.id if user else None,
+            items=json.dumps(cart),
+            total_price=total
+        )
+        db.session.add(order)
+        db.session.commit()
+
+        # Email sending logic
+        if user or guest_email:
+            try:
+                recipient_email = user.email if user else guest_email
+                recipient_name = user.name if user else "Guest"
+
+                msg = Message(
+                    subject="Sydney Flowers Express - Order Confirmation",
+                    recipients=[recipient_email]
+                )
+                msg.body = f"""Hi {recipient_name},
+
+Thank you for your order at Sydney Flowers Express!
+
+Order Summary:
+{chr(10).join(f"- {item['name']} (${item['price']:.2f})" for item in cart)}
+
+Total: ${total:.2f}
+
+We’ll begin preparing your flowers and contact you once it's ready for delivery.
+
+Warm regards,
+Sydney Flowers Express Team
+"""
+                mail.send(msg)
+            except Exception as e:
+                print(f"Email failed: {e}")
+                flash("Order placed, but we couldn’t send a confirmation email.", "warning")
+
+        session['cart'] = []  # Clear cart
+        session.modified = True
+
+        flash("Order placed successfully!", "success")
+        return render_template('checkout_confirmation.html', order=order, cart=cart)
+
+    return render_template('checkout.html', cart=cart, total=total)
+
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'your_email@gmail.com'
+app.config['MAIL_PASSWORD'] = 'your_app_password'  # Use app password, not regular one
+mail = Mail(app)
+
 # ---------------------- ROUTES ----------------------
 
 @app.route('/')
@@ -83,34 +163,67 @@ def home():
 
 @app.route('/catalogue')
 def catalogue():
-    flower = request.args.get('flower')
-    variants = []
+    flower_name = request.args.get('flower')
 
-    if flower == "Alstroemerias":
-        variants = [
-            {'name': 'Alstroemeria - Red', 'price': 16.00, 'image': 'alstroemeria_red.jpg'},
-            {'name': 'Alstroemeria - Pink', 'price': 16.00, 'image': 'alstroemeria_pink.jpg'},
-            {'name': 'Alstroemeria - White', 'price': 16.00, 'image': 'alstroemeria_white.jpg'},
-            {'name': 'Alstroemeria - Yellow', 'price': 16.00, 'image': 'alstroemeria_yellow.jpg'}
-        ]
-    elif flower == "Bell Flowers":
-        variants = [
-            {'name': 'Bell Flower - Blue', 'price': 25.00, 'image': 'bell_blue.jpg'},
-            {'name': 'Bell Flower - Pink', 'price': 25.00, 'image': 'bell_pink.jpg'},
-            {'name': 'Bell Flower - White', 'price': 25.00, 'image': 'bell_white.jpg'}
-        ]
-    elif flower == "Calla Lilies":
-        variants = [
-            {'name': 'Calla Lily - Chocolate', 'price': 25.00, 'image': 'calla_chocolate.jpg'},
-            {'name': 'Calla Lily - Pink', 'price': 25.00, 'image': 'calla_pink.jpg'},
-            {'name': 'Calla Lily - White', 'price': 25.00, 'image': 'calla_white.jpg'},
-            {'name': 'Calla Lily - Yellow', 'price': 25.00, 'image': 'calla_yellow.jpg'}
-        ]
+    flower_data = {
+        "Alstroemerias": {
+            "name": "Alstroemerias",
+            "latin_name": "Alstroemeria aurantiaca",
+            "description": "Alstroemerias (Peruvian Lilies) are tough, rounded stems that produce beautiful orchid-like flowers carried in clusters on top of the stems. These flowers have very diverse patterns of colours and symbolise friendship and devotion.",
+            "category": "Cut Flowers",
+            "genus": "Alstroemeria aurantiaca",
+            "common_name": "Lily of the Incas, Peruvian Lily",
+            "longevity": "7–12 days, depending on care and handling",
+            "stem_length": "Approx. 50cm – 70cm",
+            "availability": "All Year Round",
+            "variants": [
+                {'name': 'Alstroemeria - Red', 'price': 16.00, 'image': 'alstroemeria_red.jpg'},
+                {'name': 'Alstroemeria - Pink', 'price': 16.00, 'image': 'alstroemeria_pink.jpg'},
+                {'name': 'Alstroemeria - White', 'price': 16.00, 'image': 'alstroemeria_white.jpg'}
+            ]
+        },
+        "Bell Flowers": {
+            "name": "Bell Flowers",
+            "latin_name": "Campanula",
+            "description": "Bell Flowers are charming blooms known for their bell-shaped blossoms and vibrant colours.",
+            "category": "Cut Flowers",
+            "genus": "Campanula",
+            "common_name": "Bell Flower",
+            "longevity": "5–10 days, depending on care",
+            "stem_length": "Approx. 40cm – 60cm",
+            "availability": "Seasonal",
+            "variants": [
+                {'name': 'Bell Flower - Blue', 'price': 25.00, 'image': 'bell_blue.jpg'},
+                {'name': 'Bell Flower - Pink', 'price': 25.00, 'image': 'bell_pink.jpg'},
+                {'name': 'Bell Flower - White', 'price': 25.00, 'image': 'bell_white.jpg'}
+            ]
+        },
+        "Calla Lilies": {
+            "name": "Calla Lilies",
+            "latin_name": "Zantedeschia Areceae",
+            "description": "Calla lilies are a beautiful type of flower that have been enjoyed for centuries. They are widely used in weddings, bouquets, and cut flower arrangements. Calla Lilies are bride favourites and symbolise magnificent beauty.",
+            "category": "Cut Flowers",
+            "genus": "Zantedeschia Areceae",
+            "common_name": "Calla Lilies",
+            "longevity": "7–10 days, depending on care and handling",
+            "stem_length": "Approx. 30–45cm",
+            "availability": "All Year Round",
+            "variants": [
+                {'name': 'Calla Lily - Chocolate', 'price': 25.00, 'image': 'calla_chocolate.jpg'},
+                {'name': 'Calla Lily - Pink', 'price': 25.00, 'image': 'calla_pink.jpg'},
+                {'name': 'Calla Lily - White', 'price': 25.00, 'image': 'calla_white.jpg'},
+                {'name': 'Calla Lily - Yellow', 'price': 25.00, 'image': 'calla_yellow.jpg'}
+            ]
+        }
+    }
 
-    return render_template('catalogue.html', flower=flower, variants=variants)
+    flower = flower_data.get(flower_name)
+    if flower:
+        return render_template('catalogue.html', flower=flower)
+    else:
+        return render_template('catalogue.html', flower=None)
 
 @app.route('/customise', methods=['GET', 'POST'])
-@login_required
 def customise():
     if request.method == 'POST':
         flower_type = request.form['flowerType']
@@ -119,12 +232,10 @@ def customise():
         size = request.form['size']
 
         user = User.query.filter_by(name=session.get('user')).first()
-        if not user:
-            flash("You must be logged in to place a custom order.", "danger")
-            return redirect(url_for('login'))
 
+        # Allow anonymous users to order (no user_id saved)
         bouquet_order = BouquetOrder(
-            user_id=user.id,
+            user_id=user.id if user else None,
             flower_type=flower_type,
             colour=colour,
             message=message,
@@ -221,6 +332,25 @@ def remove_from_cart(index):
         session.modified = True
     return redirect(url_for('view_cart'))
 
+@app.route('/add_to_cart/<product_id>')
+def add_to_cart(product_id):
+    product = get_product_by_id(product_id)  # You can create this helper function
+    if not product:
+        flash("Product not found.", "danger")
+        return redirect(url_for('catalogue'))
+
+    item = {
+        'id': product_id,
+        'name': product['name'],
+        'price': float(product['price'])
+    }
+
+    session.setdefault('cart', []).append(item)
+    session.modified = True
+    flash(f"{item['name']} added to cart.", "success")
+    return redirect(url_for('view_cart'))
+
+
 # ---------------------- STATIC & CACHE ----------------------
 
 @app.route('/service-worker.js')
@@ -237,6 +367,17 @@ def add_no_cache_headers(response):
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
     return response
+
+@app.route('/orders')
+@login_required
+def orders():
+    user = User.query.filter_by(name=session.get('user')).first()
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('login'))
+
+    orders = BouquetOrder.query.filter_by(user_id=user.id).order_by(BouquetOrder.created_at.desc()).all()
+    return render_template('orders.html', orders=orders)
 
 if __name__ == '__main__':
     app.run(debug=True)

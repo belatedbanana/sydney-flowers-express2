@@ -25,7 +25,7 @@
         </div>
         <div class="mb-3">
           <label for="message" class="form-label">Personal Message</label>
-          <textarea class="form-control" id="message" name="message" rows="3" placeholder="Write a heartfelt note"></textarea>
+          <textarea class="form-control" id="message" name="message" rows="3" maxlength="200" placeholder="Write a heartfelt note"></textarea>
         </div>
         <div class="mb-4">
           <label for="size" class="form-label">Bouquet Size</label>
@@ -36,6 +36,17 @@
             <option>Large</option>
           </select>
         </div>
+
+        <div class="mb-4">
+          <h5>Bouquet Preview:</h5>
+          <p><strong>Flower:</strong> <span id="preview-flower">—</span></p>
+          <p><strong>Colour:</strong> <span id="preview-colour">—</span></p>
+          <p><strong>Message:</strong><br>
+            <span id="preview-message" style="white-space: pre-wrap;">—</span>
+          </p>
+          <p><strong>Size:</strong> <span id="preview-size">—</span></p>
+        </div>
+
         <button type="submit" class="btn btn-success btn-lg px-5">Place Order</button>
       </form>
     </div>
@@ -85,5 +96,20 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
+
+function updatePreview() {
+  document.getElementById('preview-flower').textContent = document.getElementById('flowerType').value || '—';
+  document.getElementById('preview-colour').textContent = document.getElementById('colourScheme').value || '—';
+  document.getElementById('preview-message').textContent = document.getElementById('message').value || '—';
+  document.getElementById('preview-size').textContent = document.getElementById('size').value || '—';
+}
+
+['flowerType', 'colourScheme', 'message', 'size'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updatePreview);
+});
+
+// Trigger once on page load
+updatePreview();
+
 </script>
 {% endblock %}
