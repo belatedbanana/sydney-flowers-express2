@@ -155,6 +155,15 @@ app.config['MAIL_USERNAME'] = 'your_email@gmail.com'
 app.config['MAIL_PASSWORD'] = 'your_app_password'  # Use app password, not regular one
 mail = Mail(app)
 
+class SavedBouquet(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    description = db.Column(db.Text, nullable=False)
+    total_price = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('saved_bouquets', lazy=True))
+
 # ---------------------- ROUTES ----------------------
 
 @app.route('/')
@@ -225,33 +234,59 @@ def catalogue():
 
 @app.route('/customise', methods=['GET', 'POST'])
 def customise():
+    flower_options = [
+        {"name": "Roses", "price": 20},
+        {"name": "Alstroemerias", "price": 16},
+        {"name": "Calla Lilies", "price": 25},
+        {"name": "Sunflowers", "price": 18},
+        {"name": "Tulips", "price": 22}
+    ]
+
     if request.method == 'POST':
-        flower_type = request.form['flowerType']
-        colour = request.form['colourScheme']
-        message = request.form['message']
-        size = request.form['size']
+        selected_flowers = request.form.getlist('flower')
+        quantities = request.form.getlist('quantity')
+        message = request.form.get('message')
 
+        custom_items = []
+        total_price = 0
+
+        for i in range(len(selected_flowers)):
+            name = selected_flowers[i]
+            qty = int(quantities[i])
+            flower_info = next((f for f in flower_options if f["name"] == name), None)
+            if flower_info:
+                item_price = flower_info["price"] * qty
+                custom_items.append(f"{qty} x {name}")
+                total_price += item_price
+
+        bouquet_description = ", ".join(custom_items)
+        if message:
+            bouquet_description += f" | Message: {message}"
+
+        custom_bouquet = {
+            "name": f"Custom Bouquet ({bouquet_description})",
+            "price": total_price
+        }
+
+        session.setdefault('cart', []).append(custom_bouquet)
+        session.modified = True
+
+        # Save to DB if user is logged in
         user = User.query.filter_by(name=session.get('user')).first()
+        if user:
+            saved = SavedBouquet(
+                user_id=user.id,
+                description=bouquet_description,
+                total_price=total_price
+            )
+            db.session.add(saved)
+            db.session.commit()
 
-        # Allow anonymous users to order (no user_id saved)
-        bouquet_order = BouquetOrder(
-            user_id=user.id if user else None,
-            flower_type=flower_type,
-            colour=colour,
-            message=message,
-            size=size
-        )
-        db.session.add(bouquet_order)
-        db.session.commit()
+        flash("Custom bouquet added to cart!", "success")
+        return redirect(url_for('view_cart'))
 
-        flash("Your custom bouquet order has been placed!", "success")
-        return render_template('customise_confirmation.html',
-                               flower_type=flower_type,
-                               colour=colour,
-                               message=message,
-                               size=size)
+    return render_template('customise.html', flower_options=flower_options)
 
-    return render_template('customise.html')
 
 @app.route('/admin')
 @login_required
@@ -378,6 +413,29 @@ def orders():
 
     orders = BouquetOrder.query.filter_by(user_id=user.id).order_by(BouquetOrder.created_at.desc()).all()
     return render_template('orders.html', orders=orders)
+
+@app.route('/saved-bouquets')
+@login_required
+def saved_bouquets():
+    user = User.query.filter_by(name=session.get('user')).first()
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('login'))
+
+    bouquets = SavedBouquet.query.filter_by(user_id=user.id).order_by(SavedBouquet.created_at.desc()).all()
+    return render_template('saved_bouquets.html', bouquets=bouquets)
+
+@app.route('/reorder/<int:bouquet_id>')
+@login_required
+def reorder(bouquet_id):
+    bouquet = SavedBouquet.query.get_or_404(bouquet_id)
+    session.setdefault('cart', []).append({
+        "name": f"Custom Bouquet (Reordered: {bouquet.description})",
+        "price": bouquet.total_price
+    })
+    session.modified = True
+    flash("Bouquet added to cart again!", "success")
+    return redirect(url_for('view_cart'))
 
 if __name__ == '__main__':
     app.run(debug=True)
