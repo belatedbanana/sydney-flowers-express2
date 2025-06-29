@@ -1,14 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Order Confirmed - Sydney Flowers Express{% endblock %}
+
 {% block content %}
-<div class="container">
-  <h1 class="mb-4">Your Custom Order</h1>
-  <ul class="list-group mb-4">
-    <li class="list-group-item"><strong>Flower Type:</strong> {{ flower_type }}</li>
-    <li class="list-group-item"><strong>Colour Scheme:</strong> {{ colour }}</li>
-    <li class="list-group-item"><strong>Message:</strong> {{ message }}</li>
-    <li class="list-group-item"><strong>Size:</strong> {{ size }}</li>
-  </ul>
-  <a href="/" class="btn btn-primary">Return Home</a>
+<div class="container py-5">
+  <div class="text-center mb-5">
+    <div class="display-4 text-success mb-3">
+      <i class="fas fa-check-circle"></i> Order Placed!
+    </div>
+    <p class="lead">Thank you for designing your custom bouquet. We’ll begin preparing it immediately!</p>
+  </div>
+
+  <div class="card shadow-lg mb-5 mx-auto" style="max-width: 600px;">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">Your Custom Bouquet Details</h4>
+    </div>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item"><strong>Flower Type:</strong> {{ flower_type }}</li>
+      <li class="list-group-item"><strong>Colour Scheme:</strong> {{ colour }}</li>
+      <li class="list-group-item"><strong>Message:</strong> {{ message }}</li>
+      <li class="list-group-item"><strong>Size:</strong> {{ size }}</li>
+    </ul>
+  </div>
+
+  <div class="text-center">
+    <a href="/" class="btn btn-lg btn-success px-5">Return Home</a>
+    <a href="/customise" class="btn btn-outline-primary btn-lg px-5 ms-2">Create Another</a>
+  </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<script>
+  confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 }
+  });
+</script>
 {% endblock %}

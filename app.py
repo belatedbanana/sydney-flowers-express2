@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, make_response
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps  # <-- import wraps for decorator
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -10,12 +11,23 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# Login required decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # User model with added name field
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     name = db.Column(db.String(100), nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -25,17 +37,81 @@ class User(db.Model):
 
 # Create DB tables
 @app.before_request
-def create_tables():
+def setup_app():
     db.create_all()
+
+    # Create admin user if not already exists
+    admin_email = 'admin@example.com'
+    if not User.query.filter_by(email=admin_email).first():
+        admin = User(
+            email=admin_email,
+            name='Admin'
+        )
+        admin.set_password('adminpass123')  # You can change this password
+        db.session.add(admin)
+        db.session.commit()
+        print('✅ Admin account created.')
+
+from functools import wraps
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('user') != 'Admin':
+            flash("You must be an admin to access that page.", "danger")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    user_count = User.query.count()
+    return render_template('admin_dashboard.html', user_count=user_count)
 
 # Context processor to inject user_name into all templates
 @app.context_processor
 def inject_user():
     return dict(user_name=session.get('user'))
 
+from functools import wraps
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            flash('You must be logged in to view this page.', 'danger')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/admin')
+@login_required
+def admin():
+    user = User.query.filter_by(name=session.get('user')).first()
+
+    if not user or not user.is_admin:
+        flash('Access denied. Admins only.', 'danger')
+        return redirect(url_for('home'))
+
+    return render_template('admin.html')
+
 @app.route('/')
 def home():
     return render_template('home.html')
+
+from datetime import datetime
+
+class BouquetOrder(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    flower_type = db.Column(db.String(100), nullable=False)
+    colour = db.Column(db.String(100), nullable=False)
+    message = db.Column(db.Text, nullable=True)
+    size = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('bouquet_orders', lazy=True))
 
 @app.route('/catalogue')
 def catalogue():
@@ -66,6 +142,7 @@ def catalogue():
     return render_template('catalogue.html', flower=flower, variants=variants)
 
 @app.route('/customise', methods=['GET', 'POST'])
+@login_required
 def customise():
     if request.method == 'POST':
         flower_type = request.form['flowerType']
@@ -73,6 +150,24 @@ def customise():
         message = request.form['message']
         size = request.form['size']
 
+        # Get current user
+        user = User.query.filter_by(name=session.get('user')).first()
+        if not user:
+            flash("You must be logged in to place a custom order.", "danger")
+            return redirect(url_for('login'))
+
+        # Save bouquet order
+        bouquet_order = BouquetOrder(
+            user_id=user.id,
+            flower_type=flower_type,
+            colour=colour,
+            message=message,
+            size=size
+        )
+        db.session.add(bouquet_order)
+        db.session.commit()
+
+        flash("Your custom bouquet order has been placed!", "success")
         return render_template('customise_confirmation.html',
                                flower_type=flower_type,
                                colour=colour,
@@ -80,6 +175,7 @@ def customise():
                                size=size)
 
     return render_template('customise.html')
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():

@@ -1,51 +1,89 @@
 {% extends "base.html" %}
-
-{% block title %}Customise - Sydney Flowers Express{% endblock %}
+{% block title %}Customise Your Bouquet - Sydney Flowers Express{% endblock %}
 
 {% block content %}
-<div class="container">
-  <h1 class="mb-4">Customise Your Bouquet</h1>
-  <p class="lead">Create a unique bouquet tailored to your needs.</p>
-
-  <form method="POST" action="/customise">
-    <div class="mb-3">
-      <label for="flowerType" class="form-label">Choose Your Flowers</label>
-      <select class="form-select" id="flowerType" name="flowerType">
-        <option selected disabled>Select flowers</option>
-        <option>Roses</option>
-        <option>Tulips</option>
-        <option>Sunflowers</option>
-        <option>Lilies</option>
-        <option>Mixed Seasonal</option>
-      </select>
+<div class="container py-5">
+  <div class="row">
+    <!-- Form Column -->
+    <div class="col-md-8 mb-4">
+      <h1 class="mb-4">Design Your Custom Bouquet</h1>
+      <form method="POST">
+        <div class="mb-3">
+          <label for="flowerType" class="form-label">Flower Type</label>
+          <select class="form-select" id="flowerType" name="flowerType" required>
+            <option disabled selected>Select flower type</option>
+            <option>Roses</option>
+            <option>Alstroemerias</option>
+            <option>Calla Lilies</option>
+            <option>Sunflowers</option>
+            <option>Tulips</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="colourScheme" class="form-label">Colour Scheme</label>
+          <input type="text" class="form-control" id="colourScheme" name="colourScheme" placeholder="E.g. Pink, White" required>
+        </div>
+        <div class="mb-3">
+          <label for="message" class="form-label">Personal Message</label>
+          <textarea class="form-control" id="message" name="message" rows="3" placeholder="Write a heartfelt note"></textarea>
+        </div>
+        <div class="mb-4">
+          <label for="size" class="form-label">Bouquet Size</label>
+          <select class="form-select" id="size" name="size" required>
+            <option disabled selected>Select size</option>
+            <option>Small</option>
+            <option>Medium</option>
+            <option>Large</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-success btn-lg px-5">Place Order</button>
+      </form>
     </div>
 
-    <div class="mb-3">
-      <label for="colourScheme" class="form-label">Colour Scheme</label>
-      <select class="form-select" id="colourScheme" name="colourScheme">
-        <option selected disabled>Select a colour theme</option>
-        <option>Romantic Reds</option>
-        <option>Bright & Cheerful</option>
-        <option>Soft Pastels</option>
-        <option>Classic Whites</option>
-      </select>
+    <!-- Inspiration Column -->
+    <div class="col-md-4">
+      <h3 class="mb-3">Need Ideas?</h3>
+      <div class="list-group shadow-sm">
+        <div class="list-group-item py-3" style="cursor:pointer"
+          data-flower="Roses" data-colour="Red" data-message="Forever yours ❤️">
+          <h5>❤️ Valentine’s Day</h5>
+          <p class="mb-1 text-muted small">Classic red roses with a romantic note.</p>
+        </div>
+        <div class="list-group-item py-3" style="cursor:pointer"
+          data-flower="Alstroemerias" data-colour="Pink" data-message="Thanks for everything Mum!">
+          <h5>🌸 Mother's Day</h5>
+          <p class="mb-1 text-muted small">Soft pink blooms with a sweet message.</p>
+        </div>
+        <div class="list-group-item py-3" style="cursor:pointer"
+          data-flower="Calla Lilies" data-colour="White" data-message="Wishing you a lifetime of love.">
+          <h5>💍 Wedding</h5>
+          <p class="mb-1 text-muted small">Elegant white callas for special days.</p>
+        </div>
+        <div class="list-group-item py-3" style="cursor:pointer"
+          data-flower="Sunflowers" data-colour="Yellow" data-message="Happy birthday, sunshine!">
+          <h5>🎂 Birthday</h5>
+          <p class="mb-1 text-muted small">Bright sunflowers to celebrate joyfully.</p>
+        </div>
+        <div class="list-group-item py-3" style="cursor:pointer"
+          data-flower="Tulips" data-colour="Mixed" data-message="Just because you deserve it.">
+          <h5>🌿 Just Because</h5>
+          <p class="mb-1 text-muted small">Tulips to brighten any ordinary day.</p>
+        </div>
+      </div>
     </div>
-
-    <div class="mb-3">
-      <label for="message" class="form-label">Message Card</label>
-      <textarea class="form-control" id="message" name="message" rows="3" placeholder="Enter a custom message..."></textarea>
-    </div>
-
-    <div class="mb-3">
-      <label for="size" class="form-label">Bouquet Size</label>
-      <select class="form-select" id="size" name="size">
-        <option>Small</option>
-        <option>Medium</option>
-        <option>Large</option>
-      </select>
-    </div>
-
-    <button type="submit" class="btn btn-success">Submit Custom Order</button>
-  </form>
+  </div>
 </div>
+
+<script>
+  // Auto-fill form when clicking on ideas
+  document.querySelectorAll('.list-group-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.getElementById('flowerType').value = item.dataset.flower;
+      document.getElementById('colourScheme').value = item.dataset.colour;
+      document.getElementById('message').value = item.dataset.message;
+      // Scroll to form
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+</script>
 {% endblock %}
