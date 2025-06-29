@@ -1,0 +1,19 @@
+const cacheName = 'flowers-cache-v1';
+const filesToCache = [
+  '/',
+  '/static/css/custom.css',
+  '/static/images/logo.png',
+  // Add other assets you want cached
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(cacheName).then(cache => cache.addAll(filesToCache))
+  );
+});
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => response || fetch(event.request))
+  );
+});
