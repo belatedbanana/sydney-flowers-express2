@@ -28,10 +28,14 @@ class User(db.Model):
 def create_tables():
     db.create_all()
 
+# Context processor to inject user_name into all templates
+@app.context_processor
+def inject_user():
+    return dict(user_name=session.get('user'))
+
 @app.route('/')
 def home():
-    user_name = session.get('user')
-    return render_template('home.html', user_name=user_name)
+    return render_template('home.html')  # no need to pass user_name explicitly
 
 @app.route('/catalogue')
 def catalogue():
@@ -74,7 +78,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        session['user'] = name  # ✅ Store name instead of email
+        session['user'] = name  # Store name in session
         flash('Registration successful! You are now logged in.', 'success')
         return redirect(url_for('home'))
 
@@ -88,7 +92,7 @@ def login():
 
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
-            session['user'] = user.name  # ✅ Store name in session
+            session['user'] = user.name  # Store name in session
             flash('Login successful!', 'success')
             return redirect(url_for('home'))
         else:
@@ -98,8 +102,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.pop('user', None)
-    session.pop('name', None)  # 👈 clear name
+    session.clear()  # clear entire session
     flash('You have been logged out.', 'info')
     return redirect(url_for('home'))
 
@@ -110,6 +113,15 @@ def service_worker():
 @app.route('/manifest.json')
 def manifest():
     return send_from_directory('static', 'manifest.json')
+
+from flask import make_response
+
+@app.after_request
+def add_no_cache_headers(response):
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True)

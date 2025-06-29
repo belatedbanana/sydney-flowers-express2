@@ -4,6 +4,9 @@
 
 {% block content %}
 <div class="text-center py-5">
+    {% if user_name %}
+        <h2>Welcome back, {{ user_name }}!</h2>
+    {% endif %}
     <h1 class="display-4">Welcome to Sydney Flowers Express</h1>
     <p class="lead">Your trusted wholesale flower supplier for florists and events.</p>
     <hr class="my-4">
