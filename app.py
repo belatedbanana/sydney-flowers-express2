@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
 from flask_mail import Mail, Message
+import json
 
 
 app = Flask(__name__)
@@ -39,17 +40,6 @@ class BouquetOrder(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref=db.backref('bouquet_orders', lazy=True))
 
-class CheckoutOrder(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Guest checkout allowed
-    items = db.Column(db.Text, nullable=False)  # Store cart as JSON
-    total_price = db.Column(db.Float, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    user = db.relationship('User', backref=db.backref('checkout_orders', lazy=True))
-
-# ---------------------- UTILITY ----------------------
-
 @app.before_request
 def setup_app():
     db.create_all()
@@ -60,32 +50,43 @@ def setup_app():
     if not User.query.filter_by(email=admin_email).first():
         admin = User(email=admin_email, name='Admin')
         admin.set_password('adminpass123')
+        admin.is_admin = True  # ✅ sets admin privileges
         db.session.add(admin)
         db.session.commit()
 
 @app.context_processor
 def inject_user():
-    return dict(user_name=session.get('user'))
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+        return dict(user_name=user.name if user else None, is_admin=session.get('is_admin'))
+    return dict(user_name=None, is_admin=False)
 
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user' not in session:
+        if 'user_id' not in session:
             flash('You must be logged in to view this page.', 'danger')
             return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def block_admins(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('is_admin'):
+            flash('Admins are restricted to the dashboard.', 'warning')
+            return redirect(url_for('admin_dashboard'))
         return f(*args, **kwargs)
     return decorated_function
 
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session.get('user') != 'Admin':
+        if not session.get('is_admin'):
             flash("Admin access required.", "danger")
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
-
-import json
 
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
@@ -167,10 +168,12 @@ class SavedBouquet(db.Model):
 # ---------------------- ROUTES ----------------------
 
 @app.route('/')
+@block_admins
 def home():
     return render_template('home.html')
 
 @app.route('/catalogue')
+@block_admins
 def catalogue():
     flower_name = request.args.get('flower')
 
@@ -233,6 +236,7 @@ def catalogue():
         return render_template('catalogue.html', flower=None)
 
 @app.route('/customise', methods=['GET', 'POST'])
+@block_admins
 def customise():
     flower_options = [
         {"name": "Roses", "price": 20},
@@ -287,16 +291,6 @@ def customise():
 
     return render_template('customise.html', flower_options=flower_options)
 
-
-@app.route('/admin')
-@login_required
-def admin():
-    user = User.query.filter_by(name=session.get('user')).first()
-    if not user or not user.is_admin:
-        flash('Access denied. Admins only.', 'danger')
-        return redirect(url_for('home'))
-    return render_template('admin.html')
-
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
@@ -304,6 +298,7 @@ def admin_dashboard():
     return render_template('admin_dashboard.html', user_count=user_count)
 
 @app.route('/register', methods=['GET', 'POST'])
+@block_admins
 def register():
     if request.method == 'POST':
         email = request.form['email'].lower()
@@ -324,13 +319,15 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        session['user'] = name
+        session['user_id'] = new_user.id
+        session['is_admin'] = new_user.is_admin
         flash('Registration successful! You are now logged in.', 'success')
         return redirect(url_for('home'))
 
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
+@block_admins
 def login():
     if request.method == 'POST':
         email = request.form['email'].lower()
@@ -339,8 +336,16 @@ def login():
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
             session['user'] = user.name
+            session['user_id'] = user.id
+            session['is_admin'] = user.is_admin
+
             flash('Login successful!', 'success')
-            return redirect(url_for('home'))
+            
+            # 👇 Redirect to admin dashboard if user is admin
+            if user.is_admin:
+                return redirect(url_for('admin_dashboard'))
+            else:
+                return redirect(url_for('home'))
         else:
             flash('Invalid credentials. Please try again.', 'danger')
 
@@ -355,6 +360,7 @@ def logout():
 # ---------------------- CART ROUTES ----------------------
 
 @app.route('/cart')
+@block_admins
 def view_cart():
     cart = session.get('cart', [])
     total = sum(item['price'] for item in cart)
@@ -415,6 +421,7 @@ def orders():
     return render_template('orders.html', orders=orders)
 
 @app.route('/saved-bouquets')
+@block_admins
 @login_required
 def saved_bouquets():
     user = User.query.filter_by(name=session.get('user')).first()
