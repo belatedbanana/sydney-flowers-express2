@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Order Confirmed - Sydney Flowers Express{% endblock %}
+{% block content %}
+<div class="container">
+  <h1 class="mb-4">Your Custom Order</h1>
+  <ul class="list-group mb-4">
+    <li class="list-group-item"><strong>Flower Type:</strong> {{ flower_type }}</li>
+    <li class="list-group-item"><strong>Colour Scheme:</strong> {{ colour }}</li>
+    <li class="list-group-item"><strong>Message:</strong> {{ message }}</li>
+    <li class="list-group-item"><strong>Size:</strong> {{ size }}</li>
+  </ul>
+  <a href="/" class="btn btn-primary">Return Home</a>
+</div>
+{% endblock %}

@@ -10,10 +10,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# User model
+# User model with added name field
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
 
     def set_password(self, password):
@@ -29,7 +30,8 @@ def create_tables():
 
 @app.route('/')
 def home():
-    return render_template('home.html')
+    user_name = session.get('user')
+    return render_template('home.html', user_name=user_name)
 
 @app.route('/catalogue')
 def catalogue():
@@ -43,7 +45,6 @@ def customise():
         message = request.form['message']
         size = request.form['size']
 
-        # TODO: process/store the data, or show confirmation
         return render_template('customise_confirmation.html', 
                                flower_type=flower_type, 
                                colour=colour,
@@ -56,6 +57,7 @@ def customise():
 def register():
     if request.method == 'POST':
         email = request.form['email'].lower()
+        name = request.form['name']
         password = request.form['password']
         confirm_password = request.form['confirm_password']
 
@@ -67,12 +69,12 @@ def register():
             flash('Email already registered.', 'warning')
             return redirect(url_for('register'))
 
-        new_user = User(email=email)
+        new_user = User(email=email, name=name)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
 
-        session['user'] = email
+        session['user'] = name  # ✅ Store name instead of email
         flash('Registration successful! You are now logged in.', 'success')
         return redirect(url_for('home'))
 
@@ -86,7 +88,7 @@ def login():
 
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
-            session['user'] = email
+            session['user'] = user.name  # ✅ Store name in session
             flash('Login successful!', 'success')
             return redirect(url_for('home'))
         else:
@@ -97,6 +99,7 @@ def login():
 @app.route('/logout')
 def logout():
     session.pop('user', None)
+    session.pop('name', None)  # 👈 clear name
     flash('You have been logged out.', 'info')
     return redirect(url_for('home'))
 
