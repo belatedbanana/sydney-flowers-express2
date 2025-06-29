@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Catalogue - Sydney Flowers Express{% endblock %}
+{% block title %}
+  {% if flower %}
+    {{ flower }} - Sydney Flowers Express
+  {% else %}
+    Catalogue - Sydney Flowers Express
+  {% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -9,81 +15,88 @@
   <nav class="col-md-3 mb-4">
     <h5 class="mb-3">Cut Flowers</h5>
     <ul class="list-group">
-      <li class="list-group-item">Alstromerias</li>
-      <li class="list-group-item">Bell Flowers</li>
-      <li class="list-group-item">Calla Lilies</li>
-      <li class="list-group-item">Carnations</li>
-      <li class="list-group-item">Chrysanthemums</li>
-      <li class="list-group-item">Dahlias</li>
-      <li class="list-group-item">Delphiniums</li>
-      <li class="list-group-item">Freesia</li>
-      <li class="list-group-item">Gerberas</li>
-      <li class="list-group-item">Gladiolus</li>
-      <li class="list-group-item">Hydrangeas</li>
-      <li class="list-group-item">Iris</li>
-      <li class="list-group-item">Lilium Oriental</li>
-      <li class="list-group-item">Lisianthus</li>
-      <li class="list-group-item">Peonies</li>
-      <li class="list-group-item">Rananculus</li>
-      <li class="list-group-item">Roses</li>
-      <li class="list-group-item">Snapdragons</li>
-      <li class="list-group-item">Stocks</li>
-      <li class="list-group-item">Sunflower</li>
-      <li class="list-group-item">Tulips</li>
-      <li class="list-group-item">Veronicas</li>
-      <li class="list-group-item">Fillers</li>
-      <li class="list-group-item">Greens</li>
-      <li class="list-group-item">Preserved Flowers</li>
+      {% for item in [
+          "Alstroemerias", "Bell Flowers", "Calla Lilies", "Carnations",
+          "Chrysanthemums", "Dahlias", "Delphiniums", "Freesia", "Gerberas",
+          "Gladiolus", "Hydrangeas", "Iris", "Lilium Oriental", "Lisianthus",
+          "Peonies", "Rananculus", "Roses", "Snapdragons", "Stocks", "Sunflower",
+          "Tulips", "Veronicas", "Fillers", "Greens", "Preserved Flowers"
+      ] %}
+        <li class="list-group-item {% if flower == item %}active{% endif %}">
+          <a href="{{ url_for('catalogue') }}?flower={{ item | urlencode }}" 
+             class="text-decoration-none {% if flower == item %}text-white{% else %}text-dark{% endif %}">
+            {{ item }}
+          </a>
+        </li>
+      {% endfor %}
     </ul>
   </nav>
 
-  <!-- Products Grid -->
+  <!-- Main Content -->
   <section class="col-md-9">
-    <h1 class="mb-4">Our Flower Catalogue</h1>
-    <p class="lead mb-5">Explore our premium selection, sourced fresh daily.</p>
+    {% if not flower %}
+      <h1 class="mb-4">Our Flower Catalogue</h1>
+      <p class="lead mb-5">Please select a flower from the sidebar to see details.</p>
 
-    <div class="row row-cols-1 row-cols-md-3 g-4">
+    {% else %}
+      <h1 class="mb-4">{{ flower }}</h1>
 
-      <div class="col">
-        <div class="card h-100 shadow-sm">
-          <img src="{{ url_for('static', filename='images/product1.jpg') }}" class="card-img-top" alt="Red Rose Bouquet">
-          <div class="card-body d-flex flex-column">
-            <h5 class="card-title">Red Rose Bouquet</h5>
-            <p class="card-text flex-grow-1">Classic arrangement of fresh red roses, perfect for every occasion.</p>
-            <p class="card-text fw-bold">$89.00</p>
-            <a href="#" class="btn btn-primary mt-auto">Order Now</a>
+      {# Flower descriptions #}
+      {% if flower == "Alstroemerias" %}
+      <p>Alstroemerias (Peruvian Lilies) are tough, rounded stems that produce beautiful orchid-like flowers carried in clusters on top of the stems. These flowers have very diverse patterns of colours and symbolise friendship and devotion.</p>
+      <ul>
+        <li><strong>Category:</strong> Cut Flowers</li>
+        <li><strong>Genus:</strong> Alstoemeria aurantiaca</li>
+        <li><strong>Common Name:</strong> Lily of the Incas, Peruvian Lily</li>
+        <li><strong>Longevity:</strong> 7–12 days, depending on care and handling</li>
+        <li><strong>Stem Length:</strong> Approx. 50cm – 70cm</li>
+        <li><strong>Availability:</strong> All Year Round</li>
+      </ul>
+
+      {% elif flower == "Calla Lilies" %}
+      <p>Calla lilies are a beautiful type of flower that have been enjoyed for centuries. They are widely used in weddings, bouquets, and cut flower arrangements. Calla Lilies are bride favourites and symbolise magnificent beauty.</p>
+      <ul>
+        <li><strong>Category:</strong> Cut Flowers</li>
+        <li><strong>Genus:</strong> Zantedeschia Areceae</li>
+        <li><strong>Common Name:</strong> Calla Lilies</li>
+        <li><strong>Longevity:</strong> 7–10 days, depending on care and handling</li>
+        <li><strong>Stem Length:</strong> Approx. 30–45cm</li>
+        <li><strong>Availability:</strong> All Year Round</li>
+      </ul>
+
+      {% elif flower == "Bell Flowers" %}
+      <p>Bell Flowers are charming blooms known for their bell-shaped blossoms and vibrant colours.</p>
+      <ul>
+        <li><strong>Category:</strong> Cut Flowers</li>
+        <li><strong>Genus:</strong> Campanula</li>
+        <li><strong>Common Name:</strong> Bell Flower</li>
+        <li><strong>Longevity:</strong> 5-10 days, depending on care</li>
+        <li><strong>Availability:</strong> Seasonal</li>
+      </ul>
+
+      {% else %}
+      <p>Description coming soon for {{ flower }}.</p>
+      {% endif %}
+
+      {# Flower variants #}
+      <div class="row row-cols-1 row-cols-md-2 g-4 mt-4">
+        {% for variant in variants %}
+          <div class="col">
+            <div class="card h-100 shadow-sm">
+              <img src="{{ url_for('static', filename='images/' + variant.image) }}" class="card-img-top" alt="{{ variant.name }}">
+              <div class="card-body text-center">
+                <h5 class="card-title">{{ variant.name }}</h5>
+                <p class="card-text fw-bold">${{ "%.2f"|format(variant.price) }}</p>
+                <a href="#" class="btn btn-primary">Order Now</a>
+              </div>
+            </div>
           </div>
-        </div>
+        {% else %}
+          <p>No variants available.</p>
+        {% endfor %}
       </div>
 
-      <div class="col">
-        <div class="card h-100 shadow-sm">
-          <img src="{{ url_for('static', filename='images/product2.jpg') }}" class="card-img-top" alt="Mixed Tulips">
-          <div class="card-body d-flex flex-column">
-            <h5 class="card-title">Mixed Tulips</h5>
-            <p class="card-text flex-grow-1">Bright and cheerful tulips in assorted colors.</p>
-            <p class="card-text fw-bold">$109.00</p>
-            <a href="#" class="btn btn-primary mt-auto">Order Now</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="col">
-        <div class="card h-100 shadow-sm">
-          <img src="{{ url_for('static', filename='images/product3.jpg') }}" class="card-img-top" alt="Sunflower Bunch">
-          <div class="card-body d-flex flex-column">
-            <h5 class="card-title">Sunflower Bunch</h5>
-            <p class="card-text flex-grow-1">Sunflowers that bring warmth and happiness.</p>
-            <p class="card-text fw-bold">$79.00</p>
-            <a href="#" class="btn btn-primary mt-auto">Order Now</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Add more product cards as needed -->
-
-    </div>
+    {% endif %}
   </section>
-
 </div>
 {% endblock %}

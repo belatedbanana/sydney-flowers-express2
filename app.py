@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, make_response
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -35,11 +35,35 @@ def inject_user():
 
 @app.route('/')
 def home():
-    return render_template('home.html')  # no need to pass user_name explicitly
+    return render_template('home.html')
 
 @app.route('/catalogue')
 def catalogue():
-    return render_template('catalogue.html')
+    flower = request.args.get('flower')
+    variants = []
+
+    if flower == "Alstroemerias":
+        variants = [
+            {'name': 'Alstroemeria - Red', 'price': 16.00, 'image': 'alstroemeria_red.jpg'},
+            {'name': 'Alstroemeria - Pink', 'price': 16.00, 'image': 'alstroemeria_pink.jpg'},
+            {'name': 'Alstroemeria - White', 'price': 16.00, 'image': 'alstroemeria_white.jpg'},
+            {'name': 'Alstroemeria - Yellow', 'price': 16.00, 'image': 'alstroemeria_yellow.jpg'}
+        ]
+    elif flower == "Bell Flowers":
+        variants = [
+            {'name': 'Bell Flower - Blue', 'price': 25.00, 'image': 'bell_blue.jpg'},
+            {'name': 'Bell Flower - Pink', 'price': 25.00, 'image': 'bell_pink.jpg'},
+            {'name': 'Bell Flower - White', 'price': 25.00, 'image': 'bell_white.jpg'}
+        ]
+    elif flower == "Calla Lilies":
+        variants = [
+            {'name': 'Calla Lily - Chocolate', 'price': 25.00, 'image': 'calla_chocolate.jpg'},
+            {'name': 'Calla Lily - Pink', 'price': 25.00, 'image': 'calla_pink.jpg'},
+            {'name': 'Calla Lily - White', 'price': 25.00, 'image': 'calla_white.jpg'},
+            {'name': 'Calla Lily - Yellow', 'price': 25.00, 'image': 'calla_yellow.jpg'}
+        ]
+
+    return render_template('catalogue.html', flower=flower, variants=variants)
 
 @app.route('/customise', methods=['GET', 'POST'])
 def customise():
@@ -49,8 +73,8 @@ def customise():
         message = request.form['message']
         size = request.form['size']
 
-        return render_template('customise_confirmation.html', 
-                               flower_type=flower_type, 
+        return render_template('customise_confirmation.html',
+                               flower_type=flower_type,
                                colour=colour,
                                message=message,
                                size=size)
@@ -78,7 +102,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        session['user'] = name  # Store name in session
+        session['user'] = name
         flash('Registration successful! You are now logged in.', 'success')
         return redirect(url_for('home'))
 
@@ -92,7 +116,7 @@ def login():
 
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
-            session['user'] = user.name  # Store name in session
+            session['user'] = user.name
             flash('Login successful!', 'success')
             return redirect(url_for('home'))
         else:
@@ -102,7 +126,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.clear()  # clear entire session
+    session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('home'))
 
@@ -113,8 +137,6 @@ def service_worker():
 @app.route('/manifest.json')
 def manifest():
     return send_from_directory('static', 'manifest.json')
-
-from flask import make_response
 
 @app.after_request
 def add_no_cache_headers(response):
