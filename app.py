@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
@@ -9,11 +9,6 @@ def home():
 @app.route('/catalogue')
 def catalogue():
     return render_template('catalogue.html')
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
-from flask import request, render_template, redirect, url_for
 
 @app.route('/customise', methods=['GET', 'POST'])
 def customise():
@@ -31,3 +26,6 @@ def customise():
                                size=size)
 
     return render_template('customise.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
