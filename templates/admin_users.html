@@ -1,0 +1,28 @@
+{% extends "admin_base.html" %}
+{% block title %}All Users{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h2>All Users</h2>
+  <table class="table table-striped mt-3">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Email</th>
+        <th>Name</th>
+        <th>Admin?</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.id }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.name }}</td>
+        <td>{{ "Yes" if user.is_admin else "No" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+</div>
+{% endblock %}

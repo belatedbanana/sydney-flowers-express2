@@ -5,6 +5,7 @@ from functools import wraps
 from datetime import datetime
 from flask_mail import Mail, Message
 import json
+from markupsafe import escape
 
 
 app = Flask(__name__)
@@ -259,9 +260,9 @@ def customise():
     confirmation = False
 
     if request.method == 'POST':
-        flower_type = request.form.get('flowerType')
-        colour = request.form.get('colourScheme')
-        message = request.form.get('message')
+        flower_type = escape(request.form.get('flowerType'))
+        colour = escape(request.form.get('colourScheme'))
+        message = escape(request.form.get('message'))
         size = request.form.get('size')
         action = request.form.get('action')
 
@@ -298,25 +299,24 @@ def customise():
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    users = User.query.all()
-    checkout_orders = CheckoutOrder.query.all()
+    # Retrieve total users from the database
+    total_users = User.query.count()
 
-    total_users = len(users)
-    total_orders = len(checkout_orders)
-    total_revenue = sum(order.total_price for order in checkout_orders)
+    # Retrieve total orders from the database
+    total_orders = CheckoutOrder.query.count()
 
+    # Retrieve total revenue from the database (sum of all order totals)
+    total_revenue = db.session.query(db.func.sum(CheckoutOrder.total_price)).scalar() or 0
+
+    # Retrieve top-selling flowers using a relationship and aggregation
     from collections import Counter
-    import json
-
+    all_orders = CheckoutOrder.query.all()
     flower_counter = Counter()
-    for order in checkout_orders:
-        try:
-            items = json.loads(order.items)
-            for item in items:
-                flower_counter[item['name']] += 1
-        except:
-            continue
-
+    for order in all_orders:
+        # Assuming order.items is a JSON string or list of dicts
+        items = order.items if isinstance(order.items, list) else json.loads(order.items)
+        for item in items:
+            flower_counter[item['name']] += item.get('quantity', 1)
     top_selling = flower_counter.most_common(5)
 
     return render_template(
@@ -507,6 +507,18 @@ def reorder(bouquet_id):
     session.modified = True
     flash("Bouquet added to cart again!", "success")
     return redirect(url_for('view_cart'))
+
+@app.route('/admin/users')
+@admin_required
+def admin_users():
+    users = User.query.all()
+    return render_template('admin_users.html', users=users)
+
+@app.route('/admin/orders')
+@admin_required
+def admin_orders():
+    orders = CheckoutOrder.query.order_by(CheckoutOrder.created_at.desc()).all()
+    return render_template('admin_orders.html', orders=orders)
 
 if __name__ == '__main__':
     app.run(debug=True)
