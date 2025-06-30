@@ -76,4 +76,4 @@ Sydney Flowers Express is a modern web application for ordering, customising, an
 
 ---
 
-*Sydney Flowers Express — Fast, fresh, and fabulous flowers for every
+Sydney Flowers Express — Fast, fresh, and fabulous flowers for everyone
