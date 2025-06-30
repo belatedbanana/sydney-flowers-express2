@@ -256,11 +256,14 @@ def customise():
     ]
     size_prices = {"Small": 40, "Medium": 60, "Large": 80}
 
+    confirmation = False
+
     if request.method == 'POST':
         flower_type = request.form.get('flowerType')
         colour = request.form.get('colourScheme')
         message = request.form.get('message')
         size = request.form.get('size')
+        action = request.form.get('action')
 
         bouquet_description = f"{flower_type} | Colour: {colour}"
         if message:
@@ -273,24 +276,24 @@ def customise():
             "price": price
         }
 
-        session.setdefault('cart', []).append(custom_bouquet)
-        session.modified = True
-
-        # Save to DB if user is logged in
-        user = User.query.filter_by(name=session.get('user')).first()
-        if user:
-            saved = SavedBouquet(
-                user_id=user.id,
-                description=bouquet_description,
-                total_price=price
+        if action == "place_order_now":
+            session.setdefault('cart', []).append(custom_bouquet)
+            session.modified = True
+            # Render the confirmation page with bouquet details
+            return render_template(
+                'customise_confirmation.html',
+                flower_type=flower_type,
+                colour=colour,
+                message=message,
+                size=size
             )
-            db.session.add(saved)
-            db.session.commit()
+        elif action == "add_to_cart":
+            session.setdefault('cart', []).append(custom_bouquet)
+            session.modified = True
+            flash("Custom bouquet added to cart!", "success")
+            return redirect(url_for('view_cart'))
 
-        flash("Custom bouquet added to cart!", "success")
-        return redirect(url_for('view_cart'))
-
-    return render_template('customise.html', flower_options=flower_options)
+    return render_template('customise.html', flower_options=flower_options, user_name=session.get('user'))
 
 @app.route('/admin/dashboard')
 @admin_required
@@ -418,6 +421,38 @@ def add_to_cart(product_id):
     session.setdefault('cart', []).append(item)
     session.modified = True
     flash(f"{item['name']} added to cart.", "success")
+    return redirect(url_for('view_cart'))
+
+@app.route('/add_variant_to_cart', methods=['POST'])
+@block_admins
+def add_variant_to_cart():
+    variant_name = request.form.get('variant_name')
+    try:
+        variant_price = float(request.form.get('variant_price'))
+    except (TypeError, ValueError):
+        flash("Invalid price.", "danger")
+        return redirect(url_for('catalogue'))
+    try:
+        quantity = int(request.form.get('quantity'))
+        if quantity < 1:
+            raise ValueError
+    except (TypeError, ValueError):
+        flash("Invalid quantity.", "danger")
+        return redirect(url_for('catalogue'))
+
+    if quantity > 250:
+        flash("For bulk orders over 250, please contact us directly.", "warning")
+        return redirect(url_for('catalogue'))
+
+    item = {
+        'name': variant_name,
+        'price': variant_price * quantity,
+        'quantity': quantity,
+        'unit_price': variant_price
+    }
+    session.setdefault('cart', []).append(item)
+    session.modified = True
+    flash(f"Added {quantity} x {variant_name} to cart.", "success")
     return redirect(url_for('view_cart'))
 
 

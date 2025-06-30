@@ -60,7 +60,15 @@
               <div class="card-body text-center">
                 <h5 class="card-title">{{ variant.name }}</h5>
                 <p class="card-text fw-bold">${{ "%.2f"|format(variant.price) }}</p>
-                <a href="#" class="btn btn-primary">Order Now</a>
+                <form method="POST" action="{{ url_for('add_variant_to_cart') }}" class="d-flex flex-column align-items-center gap-2">
+                  <input type="hidden" name="variant_name" value="{{ variant.name }}">
+                  <input type="hidden" name="variant_price" value="{{ variant.price }}">
+                  <div class="input-group mb-2" style="width: 120px;">
+                    <span class="input-group-text">Qty</span>
+                    <input type="number" name="quantity" min="1" max="250" value="1" class="form-control" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Add to Cart</button>
+                </form>
               </div>
             </div>
           </div>

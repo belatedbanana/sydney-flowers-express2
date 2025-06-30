@@ -48,7 +48,21 @@
           <p><strong>Price:</strong> <span id="preview-price">—</span></p>
         </div>
 
-        <button type="submit" class="btn btn-success btn-lg px-5">Place Order</button>
+        <div class="d-flex gap-2 mb-2">
+          <button type="button" id="placeOrderBtn" class="btn btn-success btn-lg px-5">Place Order Now</button>
+          <button type="submit" name="action" value="add_to_cart" class="btn btn-outline-primary btn-lg px-5">Add to Cart</button>
+          <small class="text-muted align-self-center ms-3">
+            {% if not user_name %}
+              <span>Sign in to save your bouquet for later!</span>
+            {% else %}
+              <span>You can save your bouquet for later.</span>
+            {% endif %}
+          </small>
+        </div>
+        <input type="hidden" id="actionInput" name="action" value="">
+        <div id="orderConfirmation" class="alert alert-success mt-3 d-none" role="alert">
+          Custom bouquet added to your cart!
+        </div>
       </form>
     </div>
 
@@ -117,5 +131,18 @@
   // Trigger once on page load
   updatePreview();
 
+  // Place Order Now button logic
+  document.getElementById('placeOrderBtn').addEventListener('click', function() {
+    document.getElementById('actionInput').value = 'place_order_now';
+    document.querySelector('form').submit();
+  });
+
+  // Show confirmation if needed
+  {% if confirmation %}
+    document.getElementById('orderConfirmation').classList.remove('d-none');
+    setTimeout(() => {
+      document.getElementById('orderConfirmation').classList.add('d-none');
+    }, 3000);
+  {% endif %}
 </script>
 {% endblock %}
