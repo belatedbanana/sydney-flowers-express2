@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Reviews - Sydney Flowers Express{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <h2 class="text-center mb-4">Customer Reviews</h2>
+  <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
+    {% for review in reviews %}
+    <div class="col">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <p class="card-text fst-italic">"{{ review.text }}"</p>
+          <h6 class="card-subtitle text-muted mt-3">— {{ review.name }}{% if review.role %}, {{ review.role }}{% endif %}</h6>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <hr>
+  <h3 class="mb-3">Leave a Review</h3>
+  <form method="POST" class="mb-5" onsubmit="return checkLetterCount();">
+    <div class="mb-3">
+      <input type="text" name="name" class="form-control" placeholder="Your Name (optional)">
+    </div>
+    <div class="mb-3">
+      <input type="text" name="role" class="form-control" placeholder="Your Role (optional)">
+    </div>
+    <div class="mb-3">
+      <textarea name="text" class="form-control" rows="3" placeholder="Your review" required id="reviewText" maxlength="250"></textarea>
+      <small id="letterCount" class="form-text text-muted">0 / 250 letters</small>
+    </div>
+    <button type="submit" class="btn btn-primary"><i class="bi bi-send me-1"></i>Submit Review</button>
+  </form>
+  <div class="text-center">
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">Back to Home</a>
+  </div>
+</div>
+<script>
+function checkLetterCount() {
+  const textarea = document.getElementById('reviewText');
+  if (textarea.value.length > 250) {
+    alert('Please limit your review to 250 letters.');
+    return false;
+  }
+  return true;
+}
+document.getElementById('reviewText').addEventListener('input', function() {
+  document.getElementById('letterCount').textContent = this.value.length + ' / 250 letters';
+});
+</script>
+{% endblock %}

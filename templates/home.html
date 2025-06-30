@@ -143,18 +143,6 @@
 </div>
 
 
-  <button class="carousel-control-prev" type="button" data-bs-target="#featuredCarousel" data-bs-slide="prev">
-    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-    <span class="visually-hidden">Previous</span>
-  </button>
-
-  <button class="carousel-control-next" type="button" data-bs-target="#featuredCarousel" data-bs-slide="next">
-    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-    <span class="visually-hidden">Next</span>
-  </button>
-</div>
-
-
 <!-- Why Choose Us -->
 <section class="my-5 fade-in">
   <div class="p-4 bg-success bg-opacity-10 rounded shadow-sm">
@@ -184,29 +172,43 @@
   <h2 class="text-center mb-4">What Our Clients Say</h2>
   <div class="row row-cols-1 row-cols-md-3 g-4">
     <div class="col">
-      <div class="card h-100 shadow-sm">
+      <div class="card h-100 shadow-sm border-success">
         <div class="card-body">
+          <div class="mb-2">
+            <i class="bi bi-chat-quote-fill text-success fs-2"></i>
+          </div>
           <p class="card-text fst-italic">"Sydney Flowers Express always delivers stunning flowers on time. Their customer service is exceptional!"</p>
           <h6 class="card-subtitle text-muted mt-3">— Olivia R., Event Planner</h6>
         </div>
       </div>
     </div>
     <div class="col">
-      <div class="card h-100 shadow-sm">
+      <div class="card h-100 shadow-sm border-info">
         <div class="card-body">
+          <div class="mb-2">
+            <i class="bi bi-chat-quote-fill text-info fs-2"></i>
+          </div>
           <p class="card-text fst-italic">"The custom bouquet builder made designing arrangements a breeze. Highly recommend."</p>
           <h6 class="card-subtitle text-muted mt-3">— Ethan L., Florist</h6>
         </div>
       </div>
     </div>
     <div class="col">
-      <div class="card h-100 shadow-sm">
+      <div class="card h-100 shadow-sm border-primary">
         <div class="card-body">
+          <div class="mb-2">
+            <i class="bi bi-chat-quote-fill text-primary fs-2"></i>
+          </div>
           <p class="card-text fst-italic">"Bulk orders are easy and reliable with Sydney Flowers Express. Our go-to flower supplier."</p>
           <h6 class="card-subtitle text-muted mt-3">— Mia K., Wedding Coordinator</h6>
         </div>
       </div>
     </div>
+  </div>
+  <div class="text-center mt-4">
+    <a href="{{ url_for('reviews') }}" class="btn btn-outline-primary btn-lg">
+      <i class="bi bi-stars me-2"></i>Read More Reviews &amp; Leave Yours
+    </a>
   </div>
 </section>
 
@@ -214,17 +216,62 @@
 <section class="my-5 fade-in">
   <div class="p-5 bg-primary bg-opacity-10 rounded shadow-sm text-center">
     <h3 class="text-primary mb-3">Stay Updated with Our Latest Offers</h3>
-    <p class="mb-4 text-muted">Subscribe to our newsletter to receive exclusive deals and seasonal updates.</p>
-    <form class="row justify-content-center g-2">
+    <p class="mb-4 text-muted">Subscribe to our newsletter to receive exclusive deals, seasonal updates, and floral inspiration.</p>
+    <form class="row justify-content-center g-2 align-items-center" id="newsletterForm" onsubmit="event.preventDefault(); showThanks();">
       <div class="col-auto">
-        <input type="email" class="form-control form-control-lg" placeholder="Enter your email" aria-label="Email" required>
+        <label for="newsletterEmail" class="visually-hidden">Email address</label>
+        <input type="email" class="form-control form-control-lg" placeholder="Enter your email" aria-label="Email" required id="newsletterEmail" autocomplete="email">
       </div>
       <div class="col-auto">
-        <button type="submit" class="btn btn-primary btn-lg px-4">Subscribe</button>
+        <button type="submit" class="btn btn-primary btn-lg px-4">
+          <i class="bi bi-envelope-paper-heart me-2"></i>Subscribe
+        </button>
       </div>
     </form>
+    <div id="newsletterThanks" class="alert alert-success mt-4 d-none animate__animated animate__fadeIn" role="alert" style="font-size: 1.3rem;">
+      <div class="display-6 mb-2">🎉 Thanks for subscribing! 🎉</div>
+      <div class="mb-2">You're on the list for exclusive offers and fresh floral news.</div>
+      <div>
+        <i class="bi bi-flower1 text-success fs-2"></i>
+        <i class="bi bi-flower2 text-danger fs-2"></i>
+        <i class="bi bi-flower3 text-warning fs-2"></i>
+      </div>
+    </div>
   </div>
 </section>
 
+<!-- Animate.css for fade-in effect (optional, can remove if not wanted) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+<!-- Confetti library -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<script>
+function showThanks() {
+  document.getElementById('newsletterForm').classList.add('d-none');
+  const thanks = document.getElementById('newsletterThanks');
+  thanks.classList.remove('d-none');
+  // Confetti burst!
+  confetti({
+    particleCount: 180,
+    spread: 100,
+    origin: { y: 0.6 }
+  });
+  // Extra confetti for fun!
+  setTimeout(() => {
+    confetti({
+      particleCount: 80,
+      spread: 70,
+      angle: 60,
+      origin: { x: 0, y: 0.7 }
+    });
+    confetti({
+      particleCount: 80,
+      spread: 70,
+      angle: 120,
+      origin: { x: 1, y: 0.7 }
+    });
+  }, 500);
+}
+</script>
 
 {% endblock %}

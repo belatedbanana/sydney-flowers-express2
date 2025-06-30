@@ -20,7 +20,12 @@
         <div class="container position-relative w-100">
 
             <!-- 🅰️ Brand text on the left -->
-            <a class="navbar-brand" href="/">Sydney Flowers Express</a>
+            <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+                Sydney Flowers Express
+                <a href="{{ url_for('reviews') }}" class="text-white ms-2" title="Read Reviews" style="font-size: 1.5rem;">
+                    <i class="bi bi-chat-dots-fill"></i>
+                </a>
+            </a>
 
             <!-- 🅱️ Centered logo -->
             <div class="position-absolute top-50 start-50 translate-middle">

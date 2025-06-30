@@ -175,6 +175,12 @@ class SavedBouquet(db.Model):
 
     user = db.relationship('User', backref=db.backref('saved_bouquets', lazy=True))
 
+class Review(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    role = db.Column(db.String(100))
+    text = db.Column(db.Text, nullable=False)
+
 # ---------------------- ROUTES ----------------------
 
 @app.route('/')
@@ -519,6 +525,43 @@ def admin_users():
 def admin_orders():
     orders = CheckoutOrder.query.order_by(CheckoutOrder.created_at.desc()).all()
     return render_template('admin_orders.html', orders=orders)
+
+@app.route('/reviews', methods=['GET', 'POST'])
+def reviews():
+    if request.method == 'POST':
+        name = escape(request.form.get('name', 'Anonymous'))
+        role = escape(request.form.get('role', ''))
+        text = escape(request.form.get('text', ''))
+        if text:
+            review = Review(name=name, role=role, text=text)
+            db.session.add(review)
+            db.session.commit()
+            flash("Thank you for your review!", "success")
+    reviews_list = Review.query.order_by(Review.id.desc()).all()
+    return render_template('reviews.html', reviews=reviews_list)
+
+@app.before_request
+def seed_reviews():
+    if Review.query.count() == 0:
+        demo_reviews = [
+            Review(
+                name="Olivia R.",
+                role="Event Planner",
+                text="Sydney Flowers Express always delivers stunning flowers on time. Their customer service is exceptional!"
+            ),
+            Review(
+                name="Ethan L.",
+                role="Florist",
+                text="The custom bouquet builder made designing arrangements a breeze. Highly recommend."
+            ),
+            Review(
+                name="Mia K.",
+                role="Wedding Coordinator",
+                text="Bulk orders are easy and reliable with Sydney Flowers Express. Our go-to flower supplier."
+            ),
+        ]
+        db.session.bulk_save_objects(demo_reviews)
+        db.session.commit()
 
 if __name__ == '__main__':
     app.run(debug=True)
