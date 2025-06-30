@@ -254,31 +254,23 @@ def customise():
         {"name": "Sunflowers", "price": 18},
         {"name": "Tulips", "price": 22}
     ]
+    size_prices = {"Small": 40, "Medium": 60, "Large": 80}
 
     if request.method == 'POST':
-        selected_flowers = request.form.getlist('flower')
-        quantities = request.form.getlist('quantity')
+        flower_type = request.form.get('flowerType')
+        colour = request.form.get('colourScheme')
         message = request.form.get('message')
+        size = request.form.get('size')
 
-        custom_items = []
-        total_price = 0
-
-        for i in range(len(selected_flowers)):
-            name = selected_flowers[i]
-            qty = int(quantities[i])
-            flower_info = next((f for f in flower_options if f["name"] == name), None)
-            if flower_info:
-                item_price = flower_info["price"] * qty
-                custom_items.append(f"{qty} x {name}")
-                total_price += item_price
-
-        bouquet_description = ", ".join(custom_items)
+        bouquet_description = f"{flower_type} | Colour: {colour}"
         if message:
             bouquet_description += f" | Message: {message}"
 
+        price = size_prices.get(size, 0)
+
         custom_bouquet = {
-            "name": f"Custom Bouquet ({bouquet_description})",
-            "price": total_price
+            "name": f"Custom Bouquet ({bouquet_description}, Size: {size})",
+            "price": price
         }
 
         session.setdefault('cart', []).append(custom_bouquet)
@@ -290,7 +282,7 @@ def customise():
             saved = SavedBouquet(
                 user_id=user.id,
                 description=bouquet_description,
-                total_price=total_price
+                total_price=price
             )
             db.session.add(saved)
             db.session.commit()

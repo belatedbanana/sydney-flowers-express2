@@ -31,9 +31,9 @@
           <label for="size" class="form-label">Bouquet Size</label>
           <select class="form-select" id="size" name="size" required>
             <option disabled selected>Select size</option>
-            <option>Small</option>
-            <option>Medium</option>
-            <option>Large</option>
+            <option value="Small" data-price="40">Small ($40)</option>
+            <option value="Medium" data-price="60">Medium ($60)</option>
+            <option value="Large" data-price="80">Large ($80)</option>
           </select>
         </div>
 
@@ -45,6 +45,7 @@
             <span id="preview-message" style="white-space: pre-wrap;">—</span>
           </p>
           <p><strong>Size:</strong> <span id="preview-size">—</span></p>
+          <p><strong>Price:</strong> <span id="preview-price">—</span></p>
         </div>
 
         <button type="submit" class="btn btn-success btn-lg px-5">Place Order</button>
@@ -97,19 +98,24 @@
     });
   });
 
-function updatePreview() {
-  document.getElementById('preview-flower').textContent = document.getElementById('flowerType').value || '—';
-  document.getElementById('preview-colour').textContent = document.getElementById('colourScheme').value || '—';
-  document.getElementById('preview-message').textContent = document.getElementById('message').value || '—';
-  document.getElementById('preview-size').textContent = document.getElementById('size').value || '—';
-}
+  function updatePreview() {
+    document.getElementById('preview-flower').textContent = document.getElementById('flowerType').value || '—';
+    document.getElementById('preview-colour').textContent = document.getElementById('colourScheme').value || '—';
+    document.getElementById('preview-message').textContent = document.getElementById('message').value || '—';
+    const sizeSelect = document.getElementById('size');
+    const selectedOption = sizeSelect.options[sizeSelect.selectedIndex];
+    document.getElementById('preview-size').textContent = sizeSelect.value || '—';
+    document.getElementById('preview-price').textContent = selectedOption && selectedOption.dataset.price
+      ? `$${selectedOption.dataset.price}`
+      : '—';
+  }
 
-['flowerType', 'colourScheme', 'message', 'size'].forEach(id => {
-  document.getElementById(id).addEventListener('input', updatePreview);
-});
+  ['flowerType', 'colourScheme', 'message', 'size'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updatePreview);
+  });
 
-// Trigger once on page load
-updatePreview();
+  // Trigger once on page load
+  updatePreview();
 
 </script>
 {% endblock %}
